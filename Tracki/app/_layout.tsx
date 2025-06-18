@@ -1,12 +1,20 @@
 import { Stack } from "expo-router";
+import { LogBox, StatusBar } from "react-native";
+
+LogBox.ignoreAllLogs(true);
 
 export default function RootLayout() {
   return (
-  <Stack>
-    <Stack.Screen name="index"
-    options = {{headerTitle: "Tracki"}} />
-    <Stack.Screen name="about" 
-    options = {{headerTitle: "About us"}}/>
-  </Stack>
+  <>
+    <StatusBar barStyle={"light-content"}/>
+   <Stack>
+      <Stack.Screen name="(tabs)"
+      options = {{headerShown: false,
+      }} />
+      <Stack.Screen name="not-found" 
+      options = {{headerTitle: "404"}}/>
+   </Stack>
+  </>
   );
 }
+ 
