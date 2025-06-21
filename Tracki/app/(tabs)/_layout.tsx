@@ -17,12 +17,12 @@ export default function TabsLayout() {
             backgroundColor: "#fff"
         }
     }}>
-        <Tabs.Screen name="index" options = {{ headerTitle: "Tracki", tabBarIcon: ({focused, color}) => ( <Ionicons 
+        <Tabs.Screen name="index" options = {{ headerTitle: "Tracki" , tabBarIcon: ({focused, color}) => ( <Ionicons 
         name={focused ? "home" : "home-outline"}
         color={color} 
         size={30}
      />)}}/>
-        <Tabs.Screen name="about" options = {{headerTitle: "About us", tabBarIcon: ({focused, color}) => ( <Ionicons
+        <Tabs.Screen name="about" options = {{tabBarIcon: ({focused, color}) => ( <Ionicons
             name={focused ? "about" : "about-outline"}
             color={color}
             size={28}/>

@@ -19,8 +19,12 @@ export default function Index() {
         renderSectionHeader={({section: {title} }) => (
           <Text style={styles.casestext}>{title}:</Text>
         )}
-        renderItem={({ item }) => (
-          <View style={styles.caseItem}>
+        renderItem={({ item, section }) => (
+            <View
+              style={[
+                styles.caseItem, section.title === 'Closed cases' && styles.closedCaseItem, // apply extra style if closed
+              ]}
+            >
             <Image source={item.image} style={styles.caseProfileImage} />
             <Text style={styles.caseName}>{item.name}</Text>
             <Text style={styles.caseLocation}>Last seen: {item.lastSeen}</Text>
@@ -91,5 +95,8 @@ caseButton: {
 caseButtonText: {
   color: "#555",
   textAlign: "right"
+},
+closedCaseItem: {
+  backgroundColor: "gray"
 }
 });
