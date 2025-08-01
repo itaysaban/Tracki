@@ -1,18 +1,80 @@
-import { Text, View, StyleSheet, StatusBar, Image, TouchableOpacity, SectionList } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  SectionList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../firebaseconfig";
 import { Link } from "expo-router";
-import DummyData from "@/dummy_data/dummy_data";
-
-const { openCases, closedCases } = DummyData;
-
-const Sections = [
-  { title: "Open cases", data: openCases },
-  { title: "Closed cases", data: closedCases },
-];
+import { Case } from "../types/Case";
 
 export default function Index() {
+  const [openCases, setOpenCases] = useState<Case[]>([]);
+  const [closedCases, setClosedCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCases = async () => {
+        try {
+          const openQuery = query(
+            collection(db, "cases"),
+            where("openCase", "==", true)
+          );
+          const closedQuery = query(
+            collection(db, "cases"),
+            where("openCase", "==", false)
+          );
+
+          const [openSnapshot, closedSnapshot] = await Promise.all([
+            getDocs(openQuery),
+            getDocs(closedQuery),
+          ]);
+
+          setOpenCases(
+            openSnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...(doc.data() as Omit<Case, "id">),
+            }))
+          );
+
+          setClosedCases(
+            closedSnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...(doc.data() as Omit<Case, "id">),
+            }))
+          );
+
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching cases:", error);
+        }
+      };
+
+      fetchCases();
+    }, [])
+  );
+
+  const Sections = [
+    { title: "Open cases", data: openCases },
+    { title: "Closed cases", data: closedCases },
+  ];
+
+  if (loading)
+    return (
+      <Text style={{ marginTop: 50, textAlign: "center" }}>Loading...</Text>
+    );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.usernametext}>Hello, Expo</Text>
+      <View style={styles.usernamecontainer}>
+        <Text style={styles.usernametext}>Hello, Expo</Text>
+      </View>
 
       <SectionList
         sections={Sections}
@@ -20,23 +82,67 @@ export default function Index() {
         renderSectionHeader={({ section: { title } }) => (
           <Text style={styles.casestext}>{title}:</Text>
         )}
-        renderItem={({ item, section }) => (
-        <Link href={`/cases/${item.id}`} asChild
-            style={[
-              styles.caseItem,
-              section.title === "Closed cases" && styles.closedCaseItem,
-            ]}>
-            <TouchableOpacity>
-            <Image source={item.image} style={styles.caseProfileImage} />
+        renderItem={({ item, section }) => {
+          console.log("Rendering item:", item.name, "section:", section.title);
+          console.log("Applied styles:", [
+            styles.caseCard,
+            section.title === "Closed cases" ? styles.closedCaseCard : null,
+          ]);
 
-            <View style={styles.caseDetails}>
-              <Text style={styles.caseName}>{item.name}</Text>
-              <Text style={styles.caseLocation}>Last seen: {item.lastSeen}</Text>
-            </View>
-              <Text style={styles.caseButtonText}>View case details >>></Text>
-          </TouchableOpacity>
-        </Link>
-        )}
+          return (
+           <Link href={`/cases/${item.id}`}
+           style={[
+      styles.caseCard,
+      section.title === "Closed cases" ? styles.closedCaseCard : null,
+    ]}>
+  <TouchableOpacity
+    activeOpacity={0.8}
+  >
+    <Image
+      source={{
+        uri: item.imageUri || "https://via.placeholder.com/60",
+      }}
+      style={styles.caseImage}
+    />
+
+    <View style={styles.caseInfo}>
+      <Text
+        style={[
+          styles.caseName,
+          section.title === "Closed cases"
+            ? styles.closedCaseText
+            : styles.openCaseText,
+        ]}
+      >
+        {item.name}
+      </Text>
+
+      <Text
+        style={[
+          styles.caseLocation,
+          section.title === "Closed cases"
+            ? styles.closedCaseSubText
+            : styles.openCaseText,
+        ]}
+      >
+        Last seen: {item.lastSeen}
+      </Text>
+      <Text
+        style={[
+          styles.linkTextAbsolute,
+          section.title === "Closed cases"
+            ? styles.closedCaseLinkText
+            : styles.openCaseLinkText,
+        ]}
+      >
+        View case details >>>
+      </Text>
+    </View>
+  </TouchableOpacity>
+</Link>
+
+          );
+        }}
         contentContainerStyle={styles.listContainer}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
@@ -46,64 +152,88 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  usernamecontainer: { alignItems: "center", marginBottom: 50 },
+  usernametext: { fontSize: 20, fontWeight: "bold" },
+  casestext: { fontSize: 18, fontWeight: "bold", marginVertical: 8 },
+
+  caseCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF5733",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    minHeight: 80,
+    width: "100%", // make sure it spans full width
+  },
+
+  closedCaseCard: {
+    backgroundColor: "#ccc",
+  },
+
+  caseImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    marginRight: 12,
+    resizeMode: "cover",
+    backgroundColor: "#000",
+    flexShrink: 0,
+  },
+
+  caseInfo: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight || 60,
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    position: "relative", // enable absolute children
   },
-  usernametext: {
-    color: "black",
-    textAlign: "center",
-    fontFamily: "SpaceMono-Regular",
-    fontSize: 35,
-    marginBottom: 20,
-  },
-  casestext: {
-    color: "black",
-    fontFamily: "SpaceMono-Regular",
-    fontSize: 25,
-    marginBottom: 10,
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-  caseItem: {
-  backgroundColor: "#FF5733",
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 12,
-  flexDirection: "row",
-  alignItems: "center",
-  },
-  closedCaseItem: {
-    backgroundColor: "gray",
-  },
+
+
   caseName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    // marginBottom: 10
+  fontWeight: "bold",
+  fontSize: 16,
   },
+
   caseLocation: {
-    fontSize: 14,
-    color: "#fff",
+  fontSize: 14,
+  marginTop: 2,
+  },  
+
+  linkTextAbsolute: {
+    right: -250,
+    fontSize: 12,
+    fontWeight: "600",
   },
-  caseProfileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    // marginBottom: 10,
+
+  listContainer: {
+    paddingBottom: 40,
   },
-  caseButtonText: {
-    color: "#fff",
-    textAlign: "right",
-    marginTop: 80,
-    // textDecorationLine: "underline",
+
+  linkWrapper: {
+    position: "absolute",
+    right: 12,
+    bottom: 8,
   },
-  caseDetails: {
-    flex: 1,
-    paddingLeft: 12,
-    marginBottom: 50
-  }
+
+  openCaseText: {
+    color: "white",
+  },
+  closedCaseText: {
+    color: "#000",
+  },
+  closedCaseSubText: {
+    color: "#333",
+  },
+  closedCaseLinkText: {
+    color: "#0066cc",
+  },
+  openCaseLinkText: {
+    color: "#d4f0ff",
+  },
+
 });
