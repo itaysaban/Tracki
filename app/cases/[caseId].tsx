@@ -41,7 +41,10 @@ export default function CaseDetailsScreen() {
 
       {/* Profile Image + Name */}
       {/* Update to use the imageUrl field and pass as {uri} */}
-      <Image source={{ uri: caseData.imageUrl }} style={styles.caseProfileImage} />
+      <Image source={caseData.imageUri
+      ? { uri: caseData.imageUri }
+      : require("../../assets/images/missing profiles/kid 4.png")} 
+      style={styles.caseProfileImage} />
       <Text style={styles.caseName}>{caseData.name}</Text>
       <Text style={styles.caseLocation}>Last seen: {caseData.lastSeen}</Text>
 

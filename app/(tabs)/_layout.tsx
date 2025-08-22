@@ -23,7 +23,7 @@ export default function TabsLayout() {
     >
       {/* Left tab: Home */}
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           headerTitle: "Tracki",
           tabBarIcon: ({ focused, color }) => (
